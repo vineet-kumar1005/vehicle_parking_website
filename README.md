@@ -1,2 +1,2 @@
 # vehicle_parking_website
-This is website related to optimise vehicle parking.
+A simple vehicle parking management app with admin and user roles. Built using Python and SQLite.
