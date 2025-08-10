@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Parking History - Vehicle Parking App{% endblock %}
+
+{% block content %}
+<style>
+    .history-container {
+        display: flex;
+        gap: 25px;
+        min-height: 75vh;
+    }
+    
+    .stats-panel {
+        background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 25px;
+        width: 300px;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .history-timeline {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        padding: 25px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .timeline-track {
+        position: relative;
+        padding-left: 40px;
+    }
+    
+    .timeline-rail {
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, #3498db, #2ecc71, #f39c12, #e74c3c);
+    }
+    
+    .history-entry {
+        position: relative;
+        margin-bottom: 30px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        border-left: 4px solid #3498db;
+        transition: all 0.3s ease;
+    }
+    
+    .history-entry:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .history-entry.completed {
+        border-left-color: #28a745;
+    }
+    
+    .history-entry.active {
+        border-left-color: #ffc107;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -32px;
+        top: 20px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #3498db;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .timeline-marker.completed {
+        background: #28a745;
+    }
+    
+    .timeline-marker.active {
+        background: #ffc107;
+        animation: glow 2s infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7), 0 2px 8px rgba(0,0,0,0.3); }
+        50% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0), 0 2px 8px rgba(0,0,0,0.3); }
+    }
+    
+    .cost-highlight {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+    }
+    
+    .duration-badge {
+        background: #17a2b8;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+    }
+    
+    .location-tag {
+        background: #6f42c1;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="history-container">
+    <!-- LEFT STATS PANEL -->
+    <div class="stats-panel">
+        <div class="text-center mb-4">
+            <i class="fas fa-user-circle fa-3x mb-3"></i>
+            <h4>{{ user.full_name }}</h4>
+            <p class="opacity-75">Parking History</p>
+        </div>
+        
+        <hr class="opacity-25">
+        
+        <!-- Summary Stats -->
+        <h6 class="text-uppercase opacity-75 mb-3">Your Statistics</h6>
+        
+        <div class="stat-card">
+            <i class="fas fa-car fa-2x mb-2"></i>
+            <h4>{{ reservations|length }}</h4>
+            <small>Total Bookings</small>
+        </div>
+        
+        <div class="stat-card">
+            <i class="fas fa-clock fa-2x mb-2"></i>
+            <h4>{{ reservations|selectattr('status', 'equalto', 'active')|list|length }}</h4>
+            <small>Active Sessions</small>
+        </div>
+        
+        <div class="stat-card">
+            <i class="fas fa-check-circle fa-2x mb-2"></i>
+            <h4>{{ reservations|selectattr('status', 'equalto', 'completed')|list|length }}</h4>
+            <small>Completed</small>
+        </div>
+        
+        {% set total_cost = reservations|selectattr('parking_cost')|map(attribute='parking_cost')|sum %}
+        <div class="stat-card">
+            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+            <h4>₹{{ "%.0f"|format(total_cost) }}</h4>
+            <small>Total Spent</small>
+        </div>
+        
+        <hr class="opacity-25 my-4">
+        
+        <!-- Quick Actions -->
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-light w-100 mb-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-light w-100">
+            <i class="fas fa-print me-2"></i>Print History
+        </button>
+    </div>
+    
+    <!-- RIGHT TIMELINE CONTENT -->
+    <div class="history-timeline">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-history me-2 text-primary"></i>Parking Timeline</h3>
+            <span class="badge bg-primary fs-6">{{ reservations|length }} Total Sessions</span>
+        </div>
+        
+        {% if reservations %}
+            <div class="timeline-track">
+                <div class="timeline-rail"></div>
+                
+                {% for reservation in reservations %}
+                <div class="history-entry {{ reservation.status }}">
+                    <div class="timeline-marker {{ reservation.status }}"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="location-tag">{{ reservation.spot.lot.prime_location_name }}</span>
+                                <span class="badge bg-secondary">Spot {{ reservation.spot.spot_number }}</span>
+                            </div>
+                            
+                            <h6 class="mb-1">
+                                <i class="fas fa-car me-2 text-primary"></i>
+                                Vehicle: <strong>{{ reservation.vehicle_number }}</strong>
+                            </h6>
+                            
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-play-circle me-1"></i>
+                                        Parked: {{ reservation.parking_timestamp.strftime('%d %b %Y, %H:%M') }}
+                                    </small>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-stop-circle me-1"></i>
+                                        {% if reservation.leaving_timestamp %}
+                                            Left: {{ reservation.leaving_timestamp.strftime('%d %b %Y, %H:%M') }}
+                                        {% else %}
+                                            <span class="text-warning">Still Parked</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            {% if reservation.leaving_timestamp %}
+                                <div class="duration-badge mb-2">
+                                    <i class="fas fa-stopwatch me-1"></i>
+                                    {{ "%.1f"|format((reservation.leaving_timestamp - reservation.parking_timestamp).total_seconds() / 3600) }} hrs
+                                </div>
+                            {% else %}
+                                <div class="duration-badge mb-2 bg-warning">
+                                    <i class="fas fa-clock me-1"></i>Active
+                                </div>
+                            {% endif %}
+                            
+                            {% if reservation.parking_cost %}
+                                <div class="cost-highlight">
+                                    ₹{{ reservation.parking_cost }}
+                                </div>
+                            {% else %}
+                                <div class="text-muted">
+                                    <i class="fas fa-minus"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Status indicator at bottom -->
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge {% if reservation.status == 'active' %}bg-warning{% elif reservation.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %} text-dark">
+                                {% if reservation.status == 'active' %}
+                                    <i class="fas fa-parking me-1"></i>Currently Parked
+                                {% elif reservation.status == 'completed' %}
+                                    <i class="fas fa-check me-1"></i>Session Completed
+                                {% else %}
+                                    <i class="fas fa-info me-1"></i>{{ reservation.status.title() }}
+                                {% endif %}
+                            </span>
+                            
+                            {% if reservation.status == 'active' %}
+                                <a href="{{ url_for('release_parking', reservation_id=reservation.id) }}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Release this parking spot?')">
+                                   <i class="fas fa-sign-out-alt me-1"></i>Release Now
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <img src="https://cdn-icons-png.flaticon.com/512/3875/3875172.png" 
+                     alt="No History" width="120" class="mb-4 opacity-50">
+                <h4 class="text-muted">No Parking History Yet</h4>
+                <p class="text-muted">Your parking sessions will appear here once you start booking spots</p>
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Find Parking Spots
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

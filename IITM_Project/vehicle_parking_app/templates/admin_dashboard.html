@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Center - Vehicle Parking App{% endblock %}
+
+{% block content %}
+<style>
+    .admin-container {
+        display: flex;
+        min-height: 80vh;
+        gap: 20px;
+    }
+    
+    .sidebar {
+        background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+        border-radius: 15px;
+        color: white;
+        padding: 25px;
+        width: 300px;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .main-content {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 30px;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #00d4aa;
+    }
+    
+    .action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateX(10px);
+    }
+    
+    .lot-row {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 5px solid #007bff;
+    }
+    
+    .lot-row:nth-child(even) {
+        background: #e9ecef;
+        border-left-color: #28a745;
+    }
+    
+    .status-circle {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .available { background: #28a745; }
+    .occupied { background: #dc3545; }
+</style>
+
+<div class="admin-container">
+    
+    <div class="sidebar">
+        <div class="text-center mb-4">
+            <img src="https://cdn-icons-png.flaticon.com/512/2922/2922506.png" 
+                 alt="Admin" width="80" class="mb-3">
+            <h4>Administrator</h4>
+            <p class="opacity-75">System Control Panel</p>
+        </div>
+        
+        <hr class="opacity-25">
+        
+        <h6 class="text-uppercase opacity-75 mb-3">System Overview</h6>
+        
+        <div class="stat-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-users"></i>
+                    <span class="ms-2">Users</span>
+                </div>
+                <h4 class="mb-0">{{ total_users }}</h4>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-building"></i>
+                    <span class="ms-2">Parking Lots</span>
+                </div>
+                <h4 class="mb-0">{{ parking_lots|length }}</h4>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-car"></i>
+                    <span class="ms-2">Active Cars</span>
+                </div>
+                <h4 class="mb-0">{{ active_reservations }}</h4>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-chart-bar"></i>
+                    <span class="ms-2">Total Bookings</span>
+                </div>
+                <h4 class="mb-0">{{ total_reservations }}</h4>
+            </div>
+        </div>
+        
+        <hr class="opacity-25 my-4">
+        
+        <h6 class="text-uppercase opacity-75 mb-3">Quick Actions</h6>
+        
+        <a href="{{ url_for('admin_add_lot') }}" class="action-btn">
+            <i class="fas fa-plus me-2"></i>Add New Parking Lot
+        </a>
+        
+        <a href="{{ url_for('admin_view_users') }}" class="action-btn">
+            <i class="fas fa-users me-2"></i>Manage Users
+        </a>
+        
+        <a href="{{ url_for('admin_view_reservations') }}" class="action-btn">
+            <i class="fas fa-list me-2"></i>View All Reservations
+        </a>
+    </div>
+    
+    <!-- RIGHT MAIN CONTENT -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-map-marked-alt me-2 text-primary"></i>Parking Lots Management</h3>
+            <span class="badge bg-primary fs-6">{{ parking_lots|length }} Locations</span>
+        </div>
+        
+        {% if parking_lots %}
+            <!-- Table-like listing but more visual -->
+            <div class="lots-listing">
+                {% for lot in parking_lots %}
+                <div class="lot-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5 class="mb-1 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ lot.prime_location_name }}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-home me-1"></i>{{ lot.address }}, {{ lot.pin_code }}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="fw-bold text-success">{{ lot.spots|selectattr('status', 'equalto', 'A')|list|length }}</div>
+                                    <small class="text-muted">Available</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-danger">{{ lot.spots|selectattr('status', 'equalto', 'O')|list|length }}</div>
+                                    <small class="text-muted">Occupied</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-primary">{{ lot.maximum_number_of_spots }}</div>
+                                    <small class="text-muted">Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-2 text-center">
+                            <h6 class="mb-0">₹{{ lot.price_per_hour }}</h6>
+                            <small class="text-muted">per hour</small>
+                        </div>
+                        
+                        <div class="col-md-3 text-end">
+                            <div class="btn-group-vertical btn-group-sm">
+                                <a href="{{ url_for('admin_view_spots', lot_id=lot.id) }}" 
+                                   class="btn btn-outline-info btn-sm">
+                                   <i class="fas fa-eye me-1"></i>View Spots
+                                </a>
+                                <a href="{{ url_for('admin_edit_lot', lot_id=lot.id) }}" 
+                                   class="btn btn-outline-warning btn-sm">
+                                   <i class="fas fa-edit me-1"></i>Edit Lot
+                                </a>
+                                {% if lot.spots|selectattr('status', 'equalto', 'O')|list|length == 0 %}
+                                <a href="{{ url_for('admin_delete_lot', lot_id=lot.id) }}" 
+                                   class="btn btn-outline-danger btn-sm"
+                                   onclick="return confirm('Delete this parking lot?')">
+                                   <i class="fas fa-trash me-1"></i>Delete
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% set occupied = lot.spots|selectattr('status', 'equalto', 'O')|list|length %}
+                    {% set total = lot.maximum_number_of_spots %}
+                    {% set percentage = (occupied / total * 100) if total > 0 else 0 %}
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Occupancy Rate</small>
+                            <small class="text-muted">{{ "%.0f"|format(percentage) }}%</small>
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar bg-{{ 'danger' if percentage > 80 else 'warning' if percentage > 50 else 'success' }}" 
+                                 style="width: {{ percentage }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="No Lots" width="120" class="mb-3 opacity-50">
+                <h4 class="text-muted">No Parking Lots Created Yet</h4>
+                <p class="text-muted">Start by creating your first parking lot</p>
+                <a href="{{ url_for('admin_add_lot') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create First Parking Lot
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

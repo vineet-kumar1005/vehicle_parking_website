@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - Vehicle Parking App{% endblock %}
+
+{% block content %}
+<style>
+    .user-container {
+        display: flex;
+        gap: 25px;
+        min-height: 75vh;
+    }
+    
+    .user-profile {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 25px;
+        width: 280px;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .main-area {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        padding: 25px;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+    }
+    
+    .quick-stat {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-left: 3px solid #00d4aa;
+    }
+    
+    .timeline-container {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline-line {
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 25px;
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: -22px;
+        top: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #667eea;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .timeline-dot.active {
+        background: #28a745;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+    
+    .parking-tile {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        border-left: 5px solid #007bff;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .parking-tile:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .parking-tile.available {
+        border-left-color: #28a745;
+    }
+    
+    .parking-tile.full {
+        border-left-color: #dc3545;
+        opacity: 0.7;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+    
+    .floating-action {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        color: white;
+        font-size: 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .floating-action:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+</style>
+
+<div class="user-container">
+    <!-- LEFT USER PROFILE SIDEBAR -->
+    <div class="user-profile">
+        <div class="text-center">
+            <div class="profile-avatar">
+                <i class="fas fa-user fa-2x"></i>
+            </div>
+            <h4>{{ user.full_name }}</h4>
+            <p class="opacity-75">Parking Member</p>
+        </div>
+        
+        <hr class="opacity-25">
+        
+        <!-- User Stats -->
+        <h6 class="text-uppercase opacity-75 mb-3">Your Activity</h6>
+        
+        <div class="quick-stat">
+            <div class="d-flex justify-content-between">
+                <span><i class="fas fa-car me-2"></i>Active Spots</span>
+                <strong>{{ active_reservations|length }}</strong>
+            </div>
+        </div>
+        
+        <div class="quick-stat">
+            <div class="d-flex justify-content-between">
+                <span><i class="fas fa-map-marked-alt me-2"></i>Available Lots</span>
+                <strong>{{ parking_lots|length }}</strong>
+            </div>
+        </div>
+        
+        <div class="quick-stat">
+            <div class="d-flex justify-content-between">
+                <span><i class="fas fa-clock me-2"></i>Status</span>
+                <strong>
+                    {% if active_reservations %}
+                        <span class="text-warning">Parked</span>
+                    {% else %}
+                        <span class="text-success">Available</span>
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+        
+        <hr class="opacity-25 my-4">
+        
+        <!-- Quick Actions -->
+        <h6 class="text-uppercase opacity-75 mb-3">Quick Links</h6>
+        <a href="{{ url_for('user_history') }}" 
+           class="btn btn-outline-light btn-sm w-100 mb-2">
+           <i class="fas fa-history me-2"></i>View History
+        </a>
+        <a href="{{ url_for('logout') }}" 
+           class="btn btn-outline-light btn-sm w-100">
+           <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+    </div>
+    
+    <!-- RIGHT MAIN CONTENT AREA -->
+    <div class="main-area">
+        <!-- Activity Timeline Section -->
+        <div class="mb-5">
+            <h3><i class="fas fa-clock me-2 text-primary"></i>Recent Activity</h3>
+            
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                
+                {% if active_reservations %}
+                    {% for reservation in active_reservations %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <div class="bg-success text-white p-3 rounded">
+                            <h6 class="mb-1">
+                                <i class="fas fa-parking me-2"></i>Currently Parked
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <p class="mb-1"><strong>Location:</strong> {{ reservation.spot.lot.prime_location_name }}</p>
+                                    <p class="mb-1"><strong>Spot:</strong> {{ reservation.spot.spot_number }}</p>
+                                    <p class="mb-1"><strong>Vehicle:</strong> {{ reservation.vehicle_number }}</p>
+                                    <p class="mb-0"><strong>Since:</strong> {{ reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="{{ url_for('release_parking', reservation_id=reservation.id) }}" 
+                                       class="btn btn-light btn-sm"
+                                       onclick="return confirm('Release this parking spot?')">
+                                       <i class="fas fa-sign-out-alt me-1"></i>Release
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="bg-info text-white p-3 rounded">
+                            <h6 class="mb-1">
+                                <i class="fas fa-info-circle me-2"></i>No Active Parking
+                            </h6>
+                            <p class="mb-0">You don't have any active reservations. Browse available spots below!</p>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="bg-primary text-white p-3 rounded">
+                        <h6 class="mb-1">
+                            <i class="fas fa-user-check me-2"></i>Account Active
+                        </h6>
+                        <p class="mb-0">Welcome to ParkEasy! Your account is ready for parking reservations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Available Parking Areas -->
+        <div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-map-marked-alt me-2 text-success"></i>Find Parking</h3>
+                <span class="badge bg-success fs-6">{{ parking_lots|length }} Locations Available</span>
+            </div>
+            
+            {% if parking_lots %}
+                <div class="row">
+                    {% for lot in parking_lots %}
+                    {% set available_spots = lot.spots|selectattr('status', 'equalto', 'A')|list|length %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="parking-tile {{ 'available' if available_spots > 0 else 'full' }}">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                    {{ lot.prime_location_name }}
+                                </h5>
+                                <span class="status-badge {{ 'bg-success' if available_spots > 0 else 'bg-danger' }}">
+                                    {% if available_spots > 0 %}
+                                        {{ available_spots }} Available
+                                    {% else %}
+                                        Full
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-home me-2 text-muted"></i>
+                                        <small>{{ lot.address }}</small>
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-map-pin me-2 text-muted"></i>
+                                        <small>{{ lot.pin_code }}</small>
+                                    </p>
+                                </div>
+                                <div class="col-sm-6 text-end">
+                                    <h6 class="mb-0 text-primary">₹{{ lot.price_per_hour }}/hour</h6>
+                                    <small class="text-muted">{{ available_spots }}/{{ lot.maximum_number_of_spots }} spots</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Visual indicator bar -->
+                            {% set percentage = ((lot.maximum_number_of_spots - available_spots) / lot.maximum_number_of_spots * 100) if lot.maximum_number_of_spots > 0 else 0 %}
+                            <div class="progress mb-3" style="height: 6px;">
+                                <div class="progress-bar bg-{{ 'danger' if percentage > 80 else 'warning' if percentage > 50 else 'success' }}" 
+                                     style="width: {{ percentage }}%"></div>
+                            </div>
+                            
+                            {% if available_spots > 0 %}
+                                <a href="{{ url_for('book_parking', lot_id=lot.id) }}" 
+                                   class="btn btn-primary w-100">
+                                   <i class="fas fa-parking me-2"></i>Book Parking Spot
+                                </a>
+                            {% else %}
+                                <button class="btn btn-secondary w-100" disabled>
+                                    <i class="fas fa-ban me-2"></i>No Spots Available
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" 
+                         alt="No Parking" width="100" class="mb-3 opacity-50">
+                    <h5 class="text-muted">No Parking Lots Available</h5>
+                    <p class="text-muted">Check back later for available parking spots</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<button class="floating-action" onclick="window.location.reload()" title="Refresh">
+    <i class="fas fa-sync-alt"></i>
+</button>
+{% endblock %}

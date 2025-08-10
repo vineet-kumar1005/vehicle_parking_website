@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}View Parking Spots - Admin{% endblock %}
+
+{% block content %}
+<h2>Parking Spots - {{ lot.prime_location_name }}</h2>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5>Lot Details</h5>
+        <p><strong>Address:</strong> {{ lot.address }}</p>
+        <p><strong>Pin Code:</strong> {{ lot.pin_code }}</p>
+        <p><strong>Price:</strong> ₹{{ lot.price_per_hour }}/hour</p>
+        <p><strong>Total Spots:</strong> {{ lot.maximum_number_of_spots }}</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Spot Status</h3>
+        {% if spots %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Spot Number</th>
+                            <th>Status</th>
+                            <th>Current User</th>
+                            <th>Vehicle Number</th>
+                            <th>Parked Since</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for spot in spots %}
+                        <tr>
+                            <td>{{ spot.spot_number }}</td>
+                            <td>
+                                {% if spot.status == 'A' %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Occupied</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if spot.status == 'O' %}
+                                    {% set active_reservation = spot.reservations|selectattr('status', 'equalto', 'active')|first %}
+                                    {% if active_reservation %}
+                                        {{ active_reservation.user.full_name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if spot.status == 'O' %}
+                                    {% set active_reservation = spot.reservations|selectattr('status', 'equalto', 'active')|first %}
+                                    {% if active_reservation %}
+                                        {{ active_reservation.vehicle_number }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if spot.status == 'O' %}
+                                    {% set active_reservation = spot.reservations|selectattr('status', 'equalto', 'active')|first %}
+                                    {% if active_reservation %}
+                                        {{ active_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">No parking spots found.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

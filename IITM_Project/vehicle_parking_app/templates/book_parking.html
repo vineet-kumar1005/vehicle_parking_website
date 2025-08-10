@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Book Parking - Vehicle Parking App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Book Parking Spot</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Parking Lot Details</h5>
+                    <p><strong>Location:</strong> {{ lot.prime_location_name }}</p>
+                    <p><strong>Address:</strong> {{ lot.address }}, {{ lot.pin_code }}</p>
+                    <p><strong>Price:</strong> ₹{{ lot.price_per_hour }} per hour</p>
+                    <p><strong>Available Spots:</strong> {{ lot.spots|selectattr('status', 'equalto', 'A')|list|length }} / {{ lot.maximum_number_of_spots }}</p>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                        <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" 
+                               placeholder="Enter your vehicle number (e.g., ABC-1234)" required>
+                        <div class="form-text">Please enter your vehicle registration number</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <button type="submit" class="btn btn-success">Book Spot</button>
+                        <a href="{{ url_for('user_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}View All Users - Admin{% endblock %}
+
+{% block content %}
+<h2>All Registered Users</h2>
+
+<div class="row mt-4">
+    <div class="col-12">
+        {% if users %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Total Reservations</th>
+                            <th>Active Reservations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.reservations|length }}</td>
+                            <td>{{ user.reservations|selectattr('status', 'equalto', 'active')|list|length }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">No users registered yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

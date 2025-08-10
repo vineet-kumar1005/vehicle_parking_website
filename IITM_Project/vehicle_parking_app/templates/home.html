@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Vehicle Parking App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="jumbotron p-5 rounded" style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3);">
+            <div class="text-center mb-4">
+                <h1 class="display-4">Welcome to ParkEasy</h1>
+                <p class="lead">Find and book parking spots with ease. Smart parking management for everyone.</p>
+                <hr class="my-4">
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center">
+                    <h3 class="mb-3">Get Started</h3>
+                    <p class="mb-4">Join thousands of users who trust ParkEasy for their parking needs</p>
+                    
+                    <div class="d-grid gap-2 d-md-block">
+                        <a class="btn btn-primary btn-lg me-3" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-2"></i>Register Now
+                        </a>
+                        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features section -->
+            <div class="row mt-5">
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-search fa-2x text-primary mb-3"></i>
+                    <h5>Find Spots</h5>
+                    <p class="text-muted">Locate available parking spots in real-time</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-mobile-alt fa-2x text-success mb-3"></i>
+                    <h5>Easy Booking</h5>
+                    <p class="text-muted">Book your spot instantly with just a few clicks</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-money-bill-wave fa-2x text-info mb-3"></i>
+                    <h5>Fair Pricing</h5>
+                    <p class="text-muted">Pay only for the time you actually park</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
