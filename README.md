@@ -31,7 +31,7 @@ Hi! I'm Vineet Kumar, and this is my project for **Modern Application Developmen
 1. **Install dependencies:**
 2. Set up the database and admin :	python setup.py
 3. Launch the app: python app.py
-4.Visit: http://localhost:5000
+4. Visit: http://localhost:5000
 
 🔐 Test Accounts
 Admin Login: admin
